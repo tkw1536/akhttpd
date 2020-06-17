@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -12,25 +11,7 @@ import (
 	"github.com/google/go-github/v29/github"
 )
 
-var bindAddress string
-var client *github.Client
-
 func main() {
-	// read command line arguments
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: akhttpd <bindAdress>")
-		os.Exit(1)
-	}
-
-	// read the bind address
-	bindAddress = os.Args[1]
-
-	// initialize the github client
-	client = github.NewClient(nil)
-	if client == nil {
-		panic("Unable to initialize GitHub client")
-	}
-
 	// setup handler
 	http.HandleFunc("/", handleAKHTTPAD)
 
@@ -80,7 +61,7 @@ func handleAKHTTPAD(w http.ResponseWriter, r *http.Request) {
 func getUserKeys(username string) ([]string, bool, error) {
 	// fetch all keys of error
 	opts := &github.ListOptions{}
-	keys, res, err := client.Users.ListKeys(context.Background(), username, opts)
+	keys, res, err := githubClient.Users.ListKeys(context.Background(), username, opts)
 	if err != nil {
 		return nil, false, err
 	}
