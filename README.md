@@ -9,4 +9,10 @@ To start it up run:
 docker run -p 8080:80 tkw01536/akhttpd
 ```
 
+You can also use GitHub OAuth Token like so:
+
+```
+docker run -p 8080:80 -e GITHUB_TOKEN=my-super-secret-token tkw01536/akhttpd
+```
+
 The code is licensed under the Unlicense, hence in the public domain. 

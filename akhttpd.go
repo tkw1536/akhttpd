@@ -79,3 +79,8 @@ func getUserKeys(username string) ([]string, bool, error) {
 	// and return the key strings themselves
 	return keyStrings, res.StatusCode == http.StatusNotFound, nil
 }
+
+func init() {
+	initFlags()
+	initClient()
+}
