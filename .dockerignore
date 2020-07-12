@@ -1,0 +1,7 @@
+*
+
+!cmd/akhttpd
+!*.go
+!go.mod
+!go.sum
+!Makefile
