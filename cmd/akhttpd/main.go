@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -12,46 +12,71 @@ import (
 )
 
 func main() {
-	r, err := akhttpd.NewGitHubKeyRepository(akhttpd.GHKeyRepositoryOptions{
+	r, err := akhttpd.NewGitHubKeyRepository(akhttpd.GitHubKeyRepoOptions{
 		GitHubToken:     token,
-		UpstreamTimeout: time.Duration(flagTimeout) * time.Second,
-		MaxCacheSize:    flagCacheBytes,
-		MaxCacheAge:     flagCacheTimeout,
+		UpstreamTimeout: apiTimeout,
+		MaxCacheSize:    cacheBytes,
+		MaxCacheAge:     cacheTimeout,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// setup handler
-	http.HandleFunc("/", akhttpd.NewHandler(r, akhttpd.HandlerOpts{}))
+	h := &akhttpd.Handler{KeyRepository: r}
+	h.RegisterFormatter("", akhttpd.AuthorizedKeysFormatter{})
+	h.RegisterFormatter("sh", akhttpd.ShellKeysFormatter{})
 
-	// bind
+	h.LoadDefaultFiles()
+	if indexHTMLPath != "" {
+		indexHTMLBytes, err := ioutil.ReadFile(indexHTMLPath)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		h.IndexHTML = string(indexHTMLBytes)
+		log.Printf("loaded '/' from %s", indexHTMLPath)
+	}
+
+	if underscorePath != "" {
+		log.Printf("serving '/_/' from %s", underscorePath)
+		http.Handle("/_/", h.ServeUnderscore(underscorePath))
+	}
+	http.Handle("/", h)
+
+	// bind and listen to the server
 	log.Printf("Listening on %s\n", bindAddress)
-	http.ListenAndServe(bindAddress, nil)
+	if err := http.ListenAndServe(bindAddress, nil); err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
 }
 
-// args contains the command line arguments
 var args []string
-var token string
-var flagCacheBytes int64
-var flagCacheTimeout int64
-var flagTimeout int
-var bindAddress string
+var bindAddress = "localhost:8080"
+
+// flags
+var token = os.Getenv("GITHUB_TOKEN")
+var cacheBytes int64 = 25 * 1000
+var cacheTimeout = 1 * time.Hour
+var apiTimeout = 1 * time.Second
+
+var indexHTMLPath = ""
+var underscorePath = ""
 
 func init() {
-	flag.StringVar(&token, "token", os.Getenv("GITHUB_TOKEN"), "token for github authentication (can also be set by 'GITHUB_TOKEN' variable). ")
-	flag.Int64Var(&flagCacheBytes, "cache-size", 25*1000, "maximum in-memory cache size in bytes")
-	flag.Int64Var(&flagCacheTimeout, "cache-age", 60*60, "maximum number of seconds after which cache entries should expire")
-	flag.IntVar(&flagTimeout, "timeout", 1, "timeout in seconds after which to expire akhttpd")
+
+	flag.StringVar(&token, "token", token, "token for github authentication (can also be set by 'GITHUB_TOKEN' variable). ")
+	flag.Int64Var(&cacheBytes, "cache-size", cacheBytes, "maximum in-memory cache size in bytes")
+	flag.DurationVar(&cacheTimeout, "cache-age", cacheTimeout, "maximum time after which cache entries should expire")
+	flag.DurationVar(&apiTimeout, "api-timeout", apiTimeout, "timeout for github API connection")
+	flag.StringVar(&indexHTMLPath, "index", indexHTMLPath, "optional path to '/' serve. Assumed to be of mime-type html. ")
+	flag.StringVar(&underscorePath, "serve", underscorePath, "optional path to '_' static directory to serve. ")
 	flag.Parse()
 
 	// read command line arguments
-	args := flag.Args()
-	if len(args) != 1 {
-		fmt.Println("Missing 'bindAdress'")
-		os.Exit(1)
+	if flag.NArg() != 1 {
+		return
 	}
 
 	// read the bind address
-	bindAddress = args[0]
+	bindAddress = flag.Arg(0)
 }
