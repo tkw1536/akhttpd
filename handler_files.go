@@ -1,20 +1,40 @@
 package akhttpd
 
 import (
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-func (Handler) handleFile(w http.ResponseWriter, text, contentType string) {
-	w.Header().Set("Content-Type", contentType)
-	w.Write([]byte(text))
+func handlePathOrFallback(w http.ResponseWriter, filepath, fallbackContent, contentType string) {
+	// create a reader from the filepath
+	var reader io.ReadCloser
+	var err error
+	if filepath != "" {
+		reader, err = os.OpenFile(filepath, os.O_RDONLY, os.ModePerm)
+	}
+
+	// if something went wrong, or we didn't create a reader in the first place
+	// we should use the fallback reader instead.
+	if reader == nil || err != nil {
+		reader = ioutil.NopCloser(strings.NewReader(fallbackContent))
+	}
+
+	writeFile(w, reader, contentType)
 }
 
-// LoadDefaultFiles loads the default content for index.html and robots.txt
-func (h *Handler) LoadDefaultFiles() {
-	h.IndexHTML = indexHTML
-	h.RobotsTXT = robotsTxt
+func writeFile(w http.ResponseWriter, reader io.ReadCloser, contentType string) {
+	bytes, err := ioutil.ReadAll(reader)
+	defer reader.Close()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Write(bytes)
 }
 
 var indexHTML = `
@@ -33,6 +53,7 @@ var robotsTxt = `
 User-agent: *
 Disallow: /
 Allow: /$
+Allow: /_/
 Allow: /robots.txt$
 `
 

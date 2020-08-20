@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -26,14 +25,8 @@ func main() {
 	h.RegisterFormatter("", akhttpd.AuthorizedKeysFormatter{})
 	h.RegisterFormatter("sh", akhttpd.ShellKeysFormatter{})
 
-	h.LoadDefaultFiles()
+	h.IndexHTMLPath = indexHTMLPath
 	if indexHTMLPath != "" {
-		indexHTMLBytes, err := ioutil.ReadFile(indexHTMLPath)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-		h.IndexHTML = string(indexHTMLBytes)
 		log.Printf("loaded '/' from %s", indexHTMLPath)
 	}
 

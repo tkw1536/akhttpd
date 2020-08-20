@@ -12,8 +12,8 @@ type Handler struct {
 	KeyRepository
 	Formatters map[string]Formatter
 
-	IndexHTML string // string content for 'index.html'
-	RobotsTXT string // string content for 'robots.txt'
+	IndexHTMLPath string // if non-empty path to serve index.html from
+	RobotsTXTPath string // if non-empty path to serve robots.txt from
 }
 
 // RegisterFormatter registers formatter as the formatter for the provided extension.
@@ -42,10 +42,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method != http.MethodGet:
 	case path == "/", path == "":
-		h.handleFile(w, h.IndexHTML, "text/html")
+		handlePathOrFallback(w, h.IndexHTMLPath, indexHTML, "text/html")
 	case path == "/robots.txt":
-		h.handleFile(w, h.RobotsTXT, "text/plain")
-
+		handlePathOrFallback(w, h.RobotsTXTPath, robotsTxt, "text/plain")
 	case path == "/favicon.ico": // performance optimization as webbrowsers frequently request this
 		http.NotFound(w, r)
 
