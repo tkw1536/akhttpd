@@ -90,14 +90,12 @@ func (gr GitHubKeyRepo) GetKeys(context context.Context, username string) ([]ssh
 	// - parse all the keys into ssh.PublicKey
 
 	keys, res, err := gr.Users.ListKeys(context, username, &github.ListOptions{})
-	if err != nil {
-		err = errors.Wrap(err, "ListKeys failed")
-		return nil, err
-	}
-
-	if res.StatusCode == http.StatusNotFound {
+	if res != nil && res.StatusCode == http.StatusNotFound {
 		return nil, UserNotFoundError{errors.New("User does not exist")}
-
+	}
+	if err != nil {
+		err = errors.Wrap(err, "Users.ListKeys failed")
+		return nil, err
 	}
 
 	// this second step is slightly more complicated than the above one.
