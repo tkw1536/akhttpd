@@ -1,6 +1,8 @@
-# akhttpd -- Authorized Keys HTTP Daemon
+# akhttpd - Authorized Keys HTTP Daemon
 
-This repository contains a small golang daemon that serves authorized_keys files for every GitHub user. 
+![CI Status](https://github.com/tkw1536/akhttpd/workflows/CI/badge.svg)
+
+This repository contains a small go daemon that serves authorized_keys files for every GitHub user. 
 
 This Daemon has two GET-only endpoints:
 
@@ -20,5 +22,7 @@ You can also use GitHub OAuth Token like so:
 docker run -p 8080:8080 -e GITHUB_TOKEN=my-super-secret-token docker.pkg.github.com/tkw1536/akhttpd/image:latest
 ```
 
-You might have to authenticate to the Docker Package registry. 
-The code is licensed under the Unlicense, hence in the public domain. 
+For a more detailed documentation, see [the godoc page](https://pkg.go.dev/github.com/tkw1536/akhttpd). 
+
+## License
+The code is licensed under the MIT License, hence in the public domain. 

@@ -57,7 +57,7 @@ Allow: /_/
 Allow: /robots.txt$
 `
 
-// ServeUnderscore returns a handler for the '_' path at the given path
+// ServeUnderscore returns an http.Handler that serves the provided filesystem path under the prefix '_'.
 func (Handler) ServeUnderscore(path string) http.Handler {
 	return http.StripPrefix("/_/", http.FileServer(noIndexFileSystem{http.Dir(path)}))
 }

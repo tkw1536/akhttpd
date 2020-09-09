@@ -8,13 +8,14 @@ import (
 	"strings"
 )
 
-// Handler represents an akhttp server handler
+// Handler is the main akhttp Server Handler.
+// It implements http.Handler, see the ServerHTTP method.
 type Handler struct {
 	KeyRepository
 	Formatters map[string]Formatter
 
-	IndexHTMLPath string // if non-empty path to serve index.html from
-	RobotsTXTPath string // if non-empty path to serve robots.txt from
+	IndexHTMLPath string // if non-empty, path to serve index.html from
+	RobotsTXTPath string // if non-empty, path to serve robots.txt from
 }
 
 // RegisterFormatter registers formatter as the formatter for the provided extension.
@@ -28,6 +29,27 @@ func (h *Handler) RegisterFormatter(extension string, formatter Formatter) {
 
 var handlerPath = regexp.MustCompile(`^/[a-zA-Z\d-]+(\.([a-zA-Z])+)?/?$`)
 
+// ServerHTTP serves the main akhttpd server.
+// It only answers to GET requests, all other requests are answered with Method Not Allowed.
+// Whenever something goes wrong, responds with "Internal Server Error" and logs the error.
+//
+// This method only responds successfully to a few URLS.
+// All other URLs result in a HTTP 404 Response.
+//
+//  GET /
+//  GET /index.html
+// When IndexHTMLPath is not the empty string, sends back the file with Status HTTP 200.
+// When IndexHTMLPath is empty, it sends back a default index.html file.
+//
+//  GET /${username}
+//  GET /${username}.${formatter}
+// Fetches SSH Keys for the provided user and formats them with formatter.
+// When formatter is omitted, uses the default formatter.
+// If the formatter or user do not exist, returns HTTP 404.
+//
+//  GET /robots.txt
+// When RobotsTXTPath is not the empty string, sends back the file with Status HTTP 200.
+// When RobotsTXTPath is empty, it sends back a default robots.txt file.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// ensure that only a GET is used, we don't support anything else
@@ -84,5 +106,11 @@ func (h Handler) serveAuthorizedKey(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	formatter.Format(username, keys, w)
+	n, err := formatter.WriteTo(username, keys, w)
+	if n == 0 && err != nil {
+		log.Printf("%s: Internal Server Error: %s", r.URL.Path, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	return
 }
