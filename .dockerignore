@@ -2,6 +2,7 @@
 
 !cmd/akhttpd
 !*.go
+!legal
 !go.mod
 !go.sum
 !Makefile

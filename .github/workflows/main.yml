@@ -1,17 +1,19 @@
 name: Lint & Test
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+on: [push, pull_request]
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-        - uses: actions/checkout@v2
         - uses: actions/setup-go@v2
+        - name: Install gogenlicense
+          run: go get github.com/tkw1536/gogenlicense/cmd/gogenlicense
+        - uses: actions/checkout@v2
+        - name: Update licenses
+          run: |
+            export PATH=$PATH:$(go env GOPATH)/bin
+            go generate ./...
         - name: Check that 'gofmt' has been run
           run: test -z $(gofmt -l .)
         - name: Run 'go test'

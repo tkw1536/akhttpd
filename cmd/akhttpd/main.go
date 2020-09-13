@@ -76,12 +76,14 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/tkw1536/akhttpd"
+	"github.com/tkw1536/akhttpd/legal"
 )
 
 func main() {
@@ -130,6 +132,16 @@ var indexHTMLPath = ""
 var underscorePath = ""
 
 func init() {
+	var legalFlag bool
+	flag.BoolVar(&legalFlag, "legal", legalFlag, "Print legal notices and exit")
+	defer func() {
+		if legalFlag {
+			fmt.Println("This executable contains code from several different go packages. ")
+			fmt.Println("Some of these packages require licensing information to be made available to the end user. ")
+			fmt.Println(legal.Notices)
+			os.Exit(0)
+		}
+	}()
 
 	flag.StringVar(&token, "token", token, "token for github authentication (can also be set by 'GITHUB_TOKEN' variable). ")
 	flag.Int64Var(&cacheBytes, "cache-size", cacheBytes, "maximum in-memory cache size in bytes")
