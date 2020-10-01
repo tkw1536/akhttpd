@@ -13,13 +13,13 @@ This is intended to be used inside of Docker, and can be found as [a GitHub Pack
 To start it up run:
 
 ```
-docker run -p 8080:8080 docker.pkg.github.com/tkw1536/akhttpd/image:latest
+docker run -p 8080:8080 docker.pkg.github.com/tkw1536/akhttpd/akhttpd:latest
 ```
 
 You can also use GitHub OAuth Token like so:
 
 ```
-docker run -p 8080:8080 -e GITHUB_TOKEN=my-super-secret-token docker.pkg.github.com/tkw1536/akhttpd/image:latest
+docker run -p 8080:8080 -e GITHUB_TOKEN=my-super-secret-token docker.pkg.github.com/tkw1536/akhttpd/akhttpd:latest
 ```
 
 For a more detailed documentation, see [the godoc page](https://pkg.go.dev/github.com/tkw1536/akhttpd). 

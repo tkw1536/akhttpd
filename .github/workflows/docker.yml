@@ -14,5 +14,5 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          repository: ${{ github.repository }}/image
+          repository: ${{ github.repository }}/akhttpd
           tags: latest
