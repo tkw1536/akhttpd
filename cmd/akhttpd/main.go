@@ -71,7 +71,13 @@
 //  -serve path
 //
 // akhttpd can in addition to the standard routes serve a '_' route.
-// Use this flag to configure a directory to be served from this path.
+// Use this flag to configure a directory to be served from this path
+//
+//  LEGAL_BLOCK=user1,user2
+//
+// For legal reasons it might be neccessary to block specific users from being served using this service.
+// To block a specific user, use the LEGAL_BLOCK variable.
+// It contains a comma-seperated list of users to be blocked.
 package main
 
 import (
@@ -80,6 +86,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/tkw1536/akhttpd"
@@ -87,7 +94,9 @@ import (
 )
 
 func main() {
-	r, err := akhttpd.NewGitHubKeyRepo(akhttpd.GitHubKeyRepoOptions{
+
+	// create a github key repo
+	gr, err := akhttpd.NewGitHubKeyRepo(akhttpd.GitHubKeyRepoOptions{
 		Token:        token,
 		Timeout:      apiTimeout,
 		MaxCacheSize: cacheBytes,
@@ -97,6 +106,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// blacklist provided users
+	r := &akhttpd.BlocklistedRepo{
+		Repository: gr,
+		Blocked:    blocked,
+	}
+
+	// make a handler
 	h := &akhttpd.Handler{KeyRepository: r}
 	h.RegisterFormatter("", akhttpd.FormatterAuthorizedKeys{})
 	h.RegisterFormatter("sh", akhttpd.FormatterShellScript{})
@@ -124,6 +140,12 @@ var bindAddress = "localhost:8080"
 
 // flags
 var token = os.Getenv("GITHUB_TOKEN")
+var blocked = (func(blocked string) []string {
+	if blocked == "" {
+		return nil
+	}
+	return strings.Split(blocked, ",")
+})(os.Getenv("LEGAL_BLOCK"))
 var cacheBytes int64 = 25 * 1000
 var cacheTimeout = 1 * time.Hour
 var apiTimeout = 1 * time.Second

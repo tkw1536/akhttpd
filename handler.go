@@ -101,6 +101,11 @@ func (h Handler) serveAuthorizedKey(w http.ResponseWriter, r *http.Request, user
 			return
 		}
 
+		if _, isLegalUnavailable := err.(UserNotAvailableError); isLegalUnavailable {
+			http.Error(w, "Unavailable for legal reasons", http.StatusUnavailableForLegalReasons)
+			return
+		}
+
 		log.Printf("%s: Internal Server Error: %s", r.URL.Path, err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

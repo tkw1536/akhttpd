@@ -2,6 +2,7 @@ package akhttpd
 
 import (
 	"context"
+	"strings"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -12,6 +13,7 @@ type KeyRepository interface {
 	// GetKeys resolves and returns the keys for the provided username.
 	//
 	// When this function determines that a user does not exist, it returns an error of type UserNotFoundError.
+	// When the user is not available for legal reasons, it returns an error of type UserNotAvailableError.
 	// It may return other error types for undefined errors
 	GetKeys(context context.Context, username string) (keys []ssh.PublicKey, err error)
 }
@@ -31,4 +33,35 @@ func (u UserNotFoundError) Cause() error {
 // Unwrap unwraps this error
 func (u UserNotFoundError) Unwrap() error {
 	return u.error
+}
+
+// UserNotAvailableError indicates that the provided user has been blocked from the server
+type UserNotAvailableError struct {
+	user string
+}
+
+func (usr UserNotAvailableError) Error() string {
+	return "User not available: " + usr.user
+}
+
+// BlocklistedRepo represents a KeyRepository that blocks a list of user for legal reasons
+type BlocklistedRepo struct {
+	Repository KeyRepository
+
+	Blocked []string // set of case-insensitive usernames that are blocked
+
+}
+
+// GetKeys resolves and returns the keys for the provided username.
+func (b *BlocklistedRepo) GetKeys(context context.Context, username string) ([]ssh.PublicKey, error) {
+
+	// check if the user is blacklisted
+	for _, user := range b.Blocked {
+		if strings.EqualFold(user, username) {
+			return nil, UserNotAvailableError{user: username}
+		}
+	}
+
+	// then call the normal function
+	return b.Repository.GetKeys(context, username)
 }
