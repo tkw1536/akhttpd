@@ -56,9 +56,8 @@ func (FormatterAuthorizedKeys) WriteTo(username string, keys []ssh.PublicKey, w 
 	headers.Add("Content-Disposition", "attachment; filename=\"authorized_keys\"")
 	headers.Add("Content-Type", "text/plain")
 
-	ww := &writeWrapper{w: w}
-
-	return ww.State(fmtAuthorizedKeys.Execute(ww, ctx))
+	ww := &CountWriter{Writer: w}
+	return ww.StateWith(fmtAuthorizedKeys.Execute(ww, ctx))
 }
 
 var fmtAuthorizedKeys = template.Must(template.New("authorized_keys").Parse(`
@@ -83,8 +82,8 @@ func (FormatterShellScript) WriteTo(username string, keys []ssh.PublicKey, w htt
 	headers.Add("Content-Disposition", "attachment; filename=\"authorized_keys.sh\"")
 	headers.Add("Content-Type", "text/x-shellscript")
 
-	ww := &writeWrapper{w: w}
-	return ww.State(fmtShellTemplate.Execute(ww, ctx))
+	ww := &CountWriter{Writer: w}
+	return ww.StateWith(fmtShellTemplate.Execute(ww, ctx))
 }
 
 var fmtShellTemplate = template.Must(template.New("authorized_keys.sh").Parse(`#!/bin/sh

@@ -24,13 +24,11 @@ type UserNotFoundError struct {
 }
 
 // Cause returns the error that caused this error.
-// See github.com/pkg/errors.Causer.
 func (u UserNotFoundError) Cause() error {
 	return u.error
 }
 
-// Unwrap unwraps this error.
-// See the errors package.
+// Unwrap unwraps this error
 func (u UserNotFoundError) Unwrap() error {
 	return u.error
 }
