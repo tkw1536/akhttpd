@@ -2,6 +2,7 @@ package akhttpd
 
 import (
 	"context"
+	_ "embed" // include default robots.txt and index.html
 	"log"
 	"net/http"
 	"regexp"
@@ -28,6 +29,12 @@ func (h *Handler) RegisterFormatter(extension string, formatter Formatter) {
 }
 
 var handlerPath = regexp.MustCompile(`^/[a-zA-Z\d-]+(\.([a-zA-Z])+)?/?$`)
+
+//go:embed resources/index.min.html
+var defaultIndexHTML []byte
+
+//go:embed resources/robots.txt
+var defaultRobotsTXT []byte
 
 // ServerHTTP serves the main akhttpd server.
 // It only answers to GET requests, all other requests are answered with Method Not Allowed.
@@ -65,9 +72,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method != http.MethodGet:
 	case path == "/", path == "":
-		handlePathOrFallback(w, h.IndexHTMLPath, indexHTML, "text/html")
+		handlePathOrFallback(w, h.IndexHTMLPath, defaultIndexHTML, "text/html")
 	case path == "/robots.txt":
-		handlePathOrFallback(w, h.RobotsTXTPath, robotsTxt, "text/plain")
+		handlePathOrFallback(w, h.RobotsTXTPath, defaultRobotsTXT, "text/plain")
 	case path == "/favicon.ico": // performance optimization as webbrowsers frequently request this
 		http.NotFound(w, r)
 

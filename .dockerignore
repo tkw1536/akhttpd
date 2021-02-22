@@ -6,3 +6,5 @@
 !go.mod
 !go.sum
 !Makefile
+!resources/index.min.html
+!resources/robots.txt
