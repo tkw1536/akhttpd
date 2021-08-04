@@ -11,8 +11,20 @@
 //
 //  GET /${username}
 //
+// When requested from common command line clients, behave like /${username}/authorized_keys.
+// Else, behave like /${username}.html`.
+//
+//  GET /${username}/authorized_keys
+//
 // Returns an authorized_keys file for the provided username.
-// When successful, returrns HTTP 200 along with appropriate Content-Disposition and Content-Type Headers.
+// When successful, returns HTTP 200 along with appropriate Content-Disposition and Content-Type Headers.
+// When the user does not exist, returns HTTP 404.
+// When something goes wrong, returns HTTP 500.
+//
+//  GET /${username}.html
+//
+// Returns a user-facing page to display keys for the provided username.
+// When successful, returns HTTP 200.
 // When the user does not exist, returns HTTP 404.
 // When something goes wrong, returns HTTP 500.
 //
@@ -114,12 +126,19 @@ func main() {
 
 	// make a handler
 	h := &akhttpd.Handler{KeyRepository: r}
-	h.RegisterFormatter("", akhttpd.FormatterAuthorizedKeys{})
+	h.RegisterFormatter("", akhttpd.MagicFormatter{})
+	h.RegisterFormatter("authorized_keys", akhttpd.FormatterAuthorizedKeys{})
 	h.RegisterFormatter("sh", akhttpd.FormatterShellScript{})
+	h.RegisterFormatter("html", akhttpd.FormatterHTML{})
 
 	h.IndexHTMLPath = indexHTMLPath
 	if indexHTMLPath != "" {
 		log.Printf("loaded '/' from %s", indexHTMLPath)
+	}
+
+	h.SuffixHTMLPath = suffixHTMLPath
+	if suffixHTMLPath != "" {
+		log.Printf("loaded html suffix from %s", suffixHTMLPath)
 	}
 
 	if underscorePath != "" {
@@ -135,7 +154,6 @@ func main() {
 	}
 }
 
-var args []string
 var bindAddress = "localhost:8080"
 
 // flags
@@ -151,6 +169,7 @@ var cacheTimeout = 1 * time.Hour
 var apiTimeout = 1 * time.Second
 
 var indexHTMLPath = ""
+var suffixHTMLPath = ""
 var underscorePath = ""
 
 func init() {
@@ -170,6 +189,7 @@ func init() {
 	flag.DurationVar(&cacheTimeout, "cache-age", cacheTimeout, "maximum time after which cache entries should expire")
 	flag.DurationVar(&apiTimeout, "api-timeout", apiTimeout, "timeout for github API connection")
 	flag.StringVar(&indexHTMLPath, "index", indexHTMLPath, "optional path to '/' serve. Assumed to be of mime-type html. ")
+	flag.StringVar(&suffixHTMLPath, "suffix", suffixHTMLPath, "optional path to append to all html responses. Assumed to be of mime-type html. ")
 	flag.StringVar(&underscorePath, "serve", underscorePath, "optional path to '_' static directory to serve. ")
 	flag.Parse()
 

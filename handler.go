@@ -3,8 +3,10 @@ package akhttpd
 import (
 	"context"
 	_ "embed" // include default robots.txt and index.html
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -15,8 +17,9 @@ type Handler struct {
 	KeyRepository
 	Formatters map[string]Formatter
 
-	IndexHTMLPath string // if non-empty, path to serve index.html from
-	RobotsTXTPath string // if non-empty, path to serve robots.txt from
+	SuffixHTMLPath string // if non-empty, path to append to every html response
+	IndexHTMLPath  string // if non-empty, path to serve index.html from
+	RobotsTXTPath  string // if non-empty, path to serve robots.txt from
 }
 
 // RegisterFormatter registers formatter as the formatter for the provided extension.
@@ -28,7 +31,24 @@ func (h *Handler) RegisterFormatter(extension string, formatter Formatter) {
 	h.Formatters[strings.ToLower(extension)] = formatter
 }
 
-var handlerPath = regexp.MustCompile(`^/[a-zA-Z\d-]+(\.([a-zA-Z])+)?/?$`)
+func (h Handler) writeSuffix(w io.Writer) error {
+	if h.SuffixHTMLPath == "" {
+		return nil
+	}
+
+	// open the file for reading
+	f, err := os.Open(h.SuffixHTMLPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// write the suffix into the writer
+	_, err = io.Copy(w, f)
+	return err
+}
+
+var handlerPath = regexp.MustCompile(`^/[a-zA-Z\d-]+((\.[a-zA-Z]+)|/[a-zA-Z_]+)?/?$`)
 
 //go:embed resources/index.min.html
 var defaultIndexHTML []byte
@@ -49,7 +69,7 @@ var defaultRobotsTXT []byte
 // When IndexHTMLPath is empty, it sends back a default index.html file.
 //
 //  GET /${username}
-//  GET /${username}.${formatter}
+//  GET /${username}.${formatter}, GET /${username}/${formatter}
 // Fetches SSH Keys for the provided user and formats them with formatter.
 // When formatter is omitted, uses the default formatter.
 // If the formatter or user do not exist, returns HTTP 404.
@@ -72,7 +92,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method != http.MethodGet:
 	case path == "/", path == "":
-		handlePathOrFallback(w, h.IndexHTMLPath, defaultIndexHTML, "text/html")
+		err := handlePathOrFallback(w, h.IndexHTMLPath, defaultIndexHTML, "text/html")
+		if err != nil {
+			return
+		}
+		h.writeSuffix(w)
 	case path == "/robots.txt":
 		handlePathOrFallback(w, h.RobotsTXTPath, defaultRobotsTXT, "text/plain")
 	case path == "/favicon.ico": // performance optimization as webbrowsers frequently request this
@@ -81,7 +105,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case handlerPath.MatchString(path): // the main route, where the bulk of handling takes place
 		path = strings.Trim(path, "/")
 		var ext string
+
+		// handle both '.' and '/' as an index
 		idx := strings.IndexRune(path, '.')
+		if idx == -1 {
+			idx = strings.IndexRune(path, '/')
+		}
+
 		if idx != -1 {
 			ext = path[idx+1:]
 			path = path[:idx]
@@ -118,11 +148,10 @@ func (h Handler) serveAuthorizedKey(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	n, err := formatter.WriteTo(username, keys, w)
+	n, err := formatter.WriteTo(h, username, keys, r, w)
 	if n == 0 && err != nil {
 		log.Printf("%s: Internal Server Error: %s", r.URL.Path, err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	return
 }

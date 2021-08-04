@@ -11,7 +11,7 @@ import (
 //
 // When filepath does not exist (or is the empty string), returns fallbackBytes.
 // Otherwise returns an error.
-func handlePathOrFallback(w http.ResponseWriter, filepath string, fallbackBytes []byte, contentType string) {
+func handlePathOrFallback(w http.ResponseWriter, filepath string, fallbackBytes []byte, contentType string) error {
 	var bytes []byte
 	var err error = os.ErrNotExist
 
@@ -29,12 +29,13 @@ func handlePathOrFallback(w http.ResponseWriter, filepath string, fallbackBytes 
 	// other unknown error occured; something went wrong!
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	// write
 	w.Header().Set("Content-Type", contentType)
-	w.Write(bytes)
+	_, err = w.Write(bytes)
+	return err
 }
 
 // ServeUnderscore returns an http.Handler that serves the provided filesystem path under the prefix '_'.

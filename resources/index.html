@@ -19,7 +19,7 @@
         padding: 5px;
     }
 
-    code.replace {
+    code.replace, code.key {
         user-select: all;
     }
 
@@ -30,12 +30,22 @@
 <p>
     This domain serves an instance of <a href="https://github.com/tkw1536/akhttpd/" rel="noreferrer">akhttpd</a>.
     Akhttpd serves an <code>authorized_keys</code> file for every GitHub user.
+    To get the keys for a given user, simply append the username to the URL. 
 </p>
 <p>
-    To get the keys for a given user, simply append the username to the URL.
     For example <code class="replace">http://localhost:8080/username</code> will return an <code>authorized_keys</code>
-    file for the user
-    <code id="editor">username</code>.
+    file for the user <code id="editor">username</code> when called from common command-line clients.
+    In the browser it will display an html page to view and copy the keys.
+</p>
+<p>
+    <ul>
+        <li>
+            To explicitly request an <code>authorized_keys</code> file, use <code class="replace">http://localhost:8080/username/authorized_keys</code>. <br />
+        </li>
+        <li>
+            To explicitly request <code>HTML</code>, use <code class="replace">http://localhost:8080/username.html</code>.
+        </li>
+    </ul>
 </p>
 <p>
     To install these keys on an ssh server, you could do something like:
@@ -56,8 +66,7 @@
     </code>
 </p>
 <p>
-    As you can see this domain is not intended to be used by a web browser.
-    Please also refer to <a href="https://github.com/tkw1536/akhttpd/" rel="noreferrer">the GitHub repository</a>.
+    Please refer to <a href="https://github.com/tkw1536/akhttpd/" rel="noreferrer">the GitHub repository</a> for more information.
 </p>
 <script>
     var updaters = (function (elements) {

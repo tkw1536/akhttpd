@@ -55,7 +55,7 @@ func NewGitHubKeyRepo(opts GitHubKeyRepoOptions) (*GitHubKeyRepo, error) {
 	var oauthTransport http.RoundTripper
 	if opts.Token != "" {
 		oauthTransport = oauth2.NewClient(
-			nil,
+			context.Background(),
 			oauth2.StaticTokenSource(
 				&oauth2.Token{AccessToken: opts.Token},
 			),
