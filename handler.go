@@ -52,7 +52,7 @@ func (h Handler) WriteSuffix(w io.Writer) error {
 	return err
 }
 
-var handlerPath = regexp.MustCompile(`^/[a-zA-Z\d-]+((\.[a-zA-Z]+)|/[a-zA-Z_]+)?/?$`)
+var handlerPath = regexp.MustCompile(`^/[a-zA-Z\d-@]+((\.[a-zA-Z]+)|/[a-zA-Z_]+)?/?$`)
 
 //go:embed resources/index.min.html
 var defaultIndexHTML []byte
