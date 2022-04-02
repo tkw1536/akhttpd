@@ -28,15 +28,22 @@
     }
 </style>
 <p>
-    This page contains a list of SSH Keys for the <a href="https://github.com/{{ .User }}" target="_blank" rel="noreferrer noopener">GitHub User {{.User}}</a>. 
+    This page contains a list of SSH Keys for the
+    {{if eq (.Source) ("github") }}
+        <a href="https://github.com/{{ .User }}" target="_blank" rel="noreferrer noopener">GitHub User {{.User}}</a>
+    {{else}}
+        <a>User {{.User}}</a>
+    {{end}}. 
     This page is powered by <a href="/">akhttpd</a>.
 </p>
 <p>
     Click each entry to copy it to the clipboard.
 </p>
+<ul>
 {{ range .Keys }}
-<pre><code class="block key">{{.}}</code></pre>
+<li><pre><code class="block key">{{.}}</code></pre></li>
 {{end}}
+</ul>
 
 <p>
     To install these keys on an ssh server, you could do something like:

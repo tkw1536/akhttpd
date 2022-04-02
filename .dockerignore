@@ -1,6 +1,7 @@
 *
 
 !cmd/akhttpd
+!pkg
 !*.go
 !legal
 !go.mod

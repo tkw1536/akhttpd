@@ -16,5 +16,7 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 EXPOSE 8080
 USER 82:82
 
+VOLUME /keys/
+
 # run akhttpd on the chosen port
-CMD ["/akhttpd", "0.0.0.0:8080"]
+CMD ["/akhttpd", "-akpath", "/keys/", "0.0.0.0:8080"]

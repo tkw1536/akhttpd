@@ -1,4 +1,4 @@
-package akhttpd
+package repo
 
 import (
 	"context"
@@ -15,17 +15,17 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// GitHubKeyRepo is an object that allows fetching ssh keys for GitHub Users using the GitHub API.
+// GitHubKeys is an object that allows fetching ssh keys for GitHub Users using the GitHub API.
 // It implements KeyRepository.
 //
 // The zero value is not ready to use, the caller should instantiate a GitHubClient first.
 // See also NewGitHubKeyRepo.
-type GitHubKeyRepo struct {
+type GitHubKeys struct {
 	*github.Client
 }
 
-// GitHubKeyRepoOptions represent options for a GitHubKeyRepo.
-type GitHubKeyRepoOptions struct {
+// GitHubKeysOptions represent options for a GitHubKeyRepo.
+type GitHubKeysOptions struct {
 	// Token for GitHub Authentication.
 	// Leave blank for anonymous requests; these might be subject to rate limiting.
 	Token string
@@ -45,10 +45,10 @@ type GitHubKeyRepoOptions struct {
 
 var errClientReturnedNil = errors.New("github.NewClient returned nil")
 
-// NewGitHubKeyRepo is a convenience method that instantiates NewGitHubKeyRepo.
+// NewGitHubKeys is a convenience method that instantiates NewGitHubKeys.
 // It reads options from opts, and returns a new GitHubKeyRepo.
-func NewGitHubKeyRepo(opts GitHubKeyRepoOptions) (*GitHubKeyRepo, error) {
-	var repo GitHubKeyRepo
+func NewGitHubKeys(opts GitHubKeysOptions) (*GitHubKeys, error) {
+	var repo GitHubKeys
 
 	// using a token requires use of a transport.
 	// we create one using oauth2.NewClient().
@@ -95,7 +95,7 @@ var errUserDoesNotExist = UserNotFoundError{errors.New("User does not exist")}
 // May internally cache results, as configured in the github.Client.
 //
 // If this function determines that a user does not exist, returns UserNotFoundError.
-func (gr GitHubKeyRepo) GetKeys(context context.Context, username string) ([]ssh.PublicKey, error) {
+func (gr GitHubKeys) GetKeys(context context.Context, username string) (string, []ssh.PublicKey, error) {
 
 	// this function works in two steps
 	// - fetch the keys via the github api
@@ -103,11 +103,11 @@ func (gr GitHubKeyRepo) GetKeys(context context.Context, username string) ([]ssh
 
 	keys, res, err := gr.Users.ListKeys(context, username, &github.ListOptions{})
 	if res != nil && res.StatusCode == http.StatusNotFound {
-		return nil, errUserDoesNotExist
+		return "", nil, errUserDoesNotExist
 	}
 	if err != nil {
 		err = errors.Wrap(err, "Users.ListKeys failed")
-		return nil, err
+		return "", nil, err
 	}
 
 	// Process all the keys in parallel.
@@ -126,7 +126,7 @@ func (gr GitHubKeyRepo) GetKeys(context context.Context, username string) ([]ssh
 	wg.Wait()
 	close(errChan)
 
-	return pks, <-errChan // receive will not block because errChan is closed
+	return "github", pks, <-errChan // receive will not block because errChan is closed
 }
 
 // parseKey parses a single GitHub key and writes the result into pks.

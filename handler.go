@@ -9,13 +9,16 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/tkw1536/akhttpd/pkg/format"
+	"github.com/tkw1536/akhttpd/pkg/repo"
 )
 
 // Handler is the main akhttp Server Handler.
 // It implements http.Handler, see the ServerHTTP method.
 type Handler struct {
-	KeyRepository
-	Formatters map[string]Formatter
+	repo.KeyRepository
+	Formatters map[string]format.Formatter
 
 	SuffixHTMLPath string // if non-empty, path to append to every html response
 	IndexHTMLPath  string // if non-empty, path to serve index.html from
@@ -24,14 +27,15 @@ type Handler struct {
 
 // RegisterFormatter registers formatter as the formatter for the provided extension.
 // When extension is empty, registers it for the path without an extension.
-func (h *Handler) RegisterFormatter(extension string, formatter Formatter) {
+func (h *Handler) RegisterFormatter(extension string, formatter format.Formatter) {
 	if h.Formatters == nil {
-		h.Formatters = make(map[string]Formatter)
+		h.Formatters = make(map[string]format.Formatter)
 	}
 	h.Formatters[strings.ToLower(extension)] = formatter
 }
 
-func (h Handler) writeSuffix(w io.Writer) error {
+// WriteSuffix writes the html suffix to w
+func (h Handler) WriteSuffix(w io.Writer) error {
 	if h.SuffixHTMLPath == "" {
 		return nil
 	}
@@ -96,7 +100,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		h.writeSuffix(w)
+		h.WriteSuffix(w)
 	case path == "/robots.txt":
 		handlePathOrFallback(w, h.RobotsTXTPath, defaultRobotsTXT, "text/plain")
 	case path == "/favicon.ico": // performance optimization as webbrowsers frequently request this
@@ -131,14 +135,14 @@ func (h Handler) serveAuthorizedKey(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	keys, err := h.KeyRepository.GetKeys(context.Background(), username)
+	source, keys, err := h.KeyRepository.GetKeys(context.Background(), username)
 	if err != nil {
-		if _, isNotFound := err.(UserNotFoundError); isNotFound {
+		if _, isNotFound := err.(repo.UserNotFoundError); isNotFound {
 			http.NotFound(w, r)
 			return
 		}
 
-		if _, isLegalUnavailable := err.(UserNotAvailableError); isLegalUnavailable {
+		if _, isLegalUnavailable := err.(repo.UserNotAvailableError); isLegalUnavailable {
 			http.Error(w, "Unavailable for legal reasons", http.StatusUnavailableForLegalReasons)
 			return
 		}
@@ -148,7 +152,7 @@ func (h Handler) serveAuthorizedKey(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	n, err := formatter.WriteTo(h, username, keys, r, w)
+	n, err := formatter.WriteTo(username, source, keys, r, w)
 	if n == 0 && err != nil {
 		log.Printf("%s: Internal Server Error: %s", r.URL.Path, err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

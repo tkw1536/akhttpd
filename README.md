@@ -24,6 +24,12 @@ You can also use GitHub OAuth Token like so:
 docker run -p 8080:8080 -e GITHUB_TOKEN=my-super-secret-token ghcr.io/tkw1536/akhttpd:latest
 ```
 
+You can additionally add authorized key files to override whatever is stored on GitHub by adding:
+
+```
+-v /path/to/additional/keys:/keys:ro
+```
+
 For a more detailed documentation, see [the godoc page](https://pkg.go.dev/github.com/tkw1536/akhttpd). 
 
 ## License

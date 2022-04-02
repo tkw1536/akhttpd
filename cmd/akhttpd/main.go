@@ -75,6 +75,12 @@
 // Respones are cached for 1h by default, with a maximum cache size of 25kb.
 // Use these flags to change the defaults.
 //
+//  -akpath path
+//
+// Before querying the GitHub API for a users' public keys first check this path on the filesystem.
+// If a file corresponding to a requested username exists, treat that file as an 'authorized_keys' file
+// and return only keys stored in there.
+//
 //  -index filename
 //
 // A sensible default index.html file is served on the root directory.
@@ -103,12 +109,15 @@ import (
 
 	"github.com/tkw1536/akhttpd"
 	"github.com/tkw1536/akhttpd/legal"
+	"github.com/tkw1536/akhttpd/pkg/format"
+	"github.com/tkw1536/akhttpd/pkg/repo"
 )
 
 func main() {
+	repos := make(repo.Combo, 0, 2)
 
 	// create a github key repo
-	gr, err := akhttpd.NewGitHubKeyRepo(akhttpd.GitHubKeyRepoOptions{
+	gr, err := repo.NewGitHubKeys(repo.GitHubKeysOptions{
 		Token:        token,
 		Timeout:      apiTimeout,
 		MaxCacheSize: cacheBytes,
@@ -117,19 +126,32 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	repos = append(repos, gr)
+
+	if akFilesPath != "" {
+		log.Printf("will check for public keys in %s", akFilesPath)
+		disk := repo.Disk{FS: os.DirFS(akFilesPath)}
+		repos = append(repos, disk)
+	}
 
 	// blacklist provided users
-	r := &akhttpd.BlocklistedRepo{
-		Repository: gr,
+	r := &repo.Blocklisted{
+		Repository: repos,
 		Blocked:    blocked,
 	}
 
 	// make a handler
 	h := &akhttpd.Handler{KeyRepository: r}
-	h.RegisterFormatter("", akhttpd.MagicFormatter{})
-	h.RegisterFormatter("authorized_keys", akhttpd.FormatterAuthorizedKeys{})
-	h.RegisterFormatter("sh", akhttpd.FormatterShellScript{})
-	h.RegisterFormatter("html", akhttpd.FormatterHTML{})
+
+	sh := format.ShellScript{}
+	html := format.HTML{Suffix: h.WriteSuffix}
+	authorized_keys := format.AuthorizedKeys{}
+	magic := format.Magic{AuthorizedKeys: authorized_keys, HTML: html}
+
+	h.RegisterFormatter("", magic)
+	h.RegisterFormatter("authorized_keys", authorized_keys)
+	h.RegisterFormatter("sh", sh)
+	h.RegisterFormatter("html", html)
 
 	h.IndexHTMLPath = indexHTMLPath
 	if indexHTMLPath != "" {
@@ -171,6 +193,7 @@ var apiTimeout = 1 * time.Second
 var indexHTMLPath = ""
 var suffixHTMLPath = ""
 var underscorePath = ""
+var akFilesPath = ""
 
 func init() {
 	var legalFlag bool
@@ -191,6 +214,7 @@ func init() {
 	flag.StringVar(&indexHTMLPath, "index", indexHTMLPath, "optional path to '/' serve. Assumed to be of mime-type html. ")
 	flag.StringVar(&suffixHTMLPath, "suffix", suffixHTMLPath, "optional path to append to all html responses. Assumed to be of mime-type html. ")
 	flag.StringVar(&underscorePath, "serve", underscorePath, "optional path to '_' static directory to serve. ")
+	flag.StringVar(&akFilesPath, "akpath", akFilesPath, "optional path to check for additional authorized keys files")
 	flag.Parse()
 
 	// read command line arguments
