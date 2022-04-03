@@ -116,6 +116,13 @@ import (
 func main() {
 	repos := make(repo.Combo, 0, 2)
 
+	// create the files directory first
+	if akFilesPath != "" {
+		log.Printf("will check for public keys in %s", akFilesPath)
+		disk := repo.Disk{FS: os.DirFS(akFilesPath)}
+		repos = append(repos, disk)
+	}
+
 	// create a github key repo
 	gr, err := repo.NewGitHubKeys(repo.GitHubKeysOptions{
 		Token:        token,
@@ -127,12 +134,6 @@ func main() {
 		log.Fatal(err)
 	}
 	repos = append(repos, gr)
-
-	if akFilesPath != "" {
-		log.Printf("will check for public keys in %s", akFilesPath)
-		disk := repo.Disk{FS: os.DirFS(akFilesPath)}
-		repos = append(repos, disk)
-	}
 
 	// blacklist provided users
 	r := &repo.Blocklisted{
