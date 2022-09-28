@@ -3,15 +3,12 @@ package repo
 import (
 	"context"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
 )
 
 // Combo combines an array of KeyRepositories by trying each in order.
 // Keys for a specific user are always returned from a specific repository, and never combined.
 type Combo []KeyRepository
-
-var errNoCombo = errors.New("Combo: No repository found user")
 
 // GetKeys resolves and returns the keys for the provided username.
 // When a user cannot be found, returns the appropriate error of the last user

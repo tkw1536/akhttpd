@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<title>Upload Keys - akhttpd - Authorized Keys HTTP Daemon</title>
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+        line-height: 1.5;
+        color: #000;
+        background: #fff;
+    }
+
+    a {
+        color: #000;
+        text-decoration: underline;
+    }
+
+    code, textarea {
+        background: lightgray;
+        padding: 5px;
+    }
+
+    code.replace, code.key {
+        user-select: all;
+    }
+
+    code.block {
+        margin: 10px;
+    }
+
+    textarea {
+        display: block;
+        min-width: 50%;
+        margin: 10px;
+        border: 0;
+    }
+</style>
+<p>
+    You can use this page to install an ssh key onto a server.
+    This page is powered by <a href="/">akhttpd</a>.
+    <ol>
+        <li>
+            Paste your key into the box below.
+        </li>
+        <li>
+            Click on <em>Continue</em> to make the key available.
+        </li>
+        <li>
+            Follow the instructions to download it to other machines.
+        </li>
+        <li>
+            Click on the <em>Stop</em> button or close the window to delete the key from the server.
+        </li>
+    </ol>
+    
+</p>
+<form id="form">
+    <textarea id="key" rows="10">
+    </textarea>
+    <button>Make Available</button>
+</form>
+
+<div id="error" style="display: initial">
+</div>
+
+<div id="result" style="display: none">
+    <p>
+        The key has been made available on the server temporarily.
+        Close the window or click the <em>Stop</em> button to delete it.
+    </p>
+    <p>
+        To install this key on an ssh server, you could do something like:
+    </p>
+    <p>
+        <code class="block replace">
+            curl -L localhost:8080/{{.User}} > .ssh/authorized_keys
+        </code>
+    </p>
+    <p>
+        For convenience, this service also exposes a script to do this automatically.
+        Using this script will overwrite any existing SSH Keys for your user.
+        You can use it like:
+    </p>
+    <p>
+        <code class="block replace">
+            curl -L localhost:8080/{{.User}}.sh | sh
+        </code>
+    </p>
+</div>
+
+
+
+<script>
+    var registerKey = function(key, onSuccess, onClose, onFailure) {
+        var socket;
+        try {
+            socket = new WebSocket(location.href.replace('http', 'ws'));
+        } catch(e) {
+            onFailure();
+            return;
+        }
+        var cleanup = function() {
+            socket.onclose = function(){};
+            socket.onerror = function(){};
+            socket.onmessage = function(){};
+
+            try {
+                socket.close();
+            } catch(e){}
+        }
+
+        socket.onerror = function() {
+            cleanup()
+            onFailure()
+        }
+    
+        socket.onopen = function() {
+            socket.send(key)
+        }
+        socket.onmessage = function(message) {
+            socket.onclose = function(){
+                onClose();
+                cleanup();
+            };
+            socket.onerror = function(){
+                onClose();
+                cleanup();
+            };
+            socket.onmessage = function(){};
+            onSuccess(message.data, function() {
+                cleanup();
+                onClose();
+            })
+        }
+    
+        socket.onclose = function() {
+            cleanup()
+            onFailure()
+        }
+    }
+
+    var form = document.getElementById("form")
+    var button = form.querySelector('button')
+    var textarea = document.getElementById("key")
+    var error = document.getElementById("error")
+    var result = document.getElementById("result")
+
+    /** resetUI resets the UI to the default state, with the given message */
+    var resetUI = function(message) {
+        console.log("resetUI", message);
+        button.removeAttribute('disabled');
+        button.innerHTML = 'Make Available';
+
+        form.removeEventListener('submit', handleEnd);
+        form.addEventListener('submit', handleBegin);
+
+        textarea.removeAttribute('readonly');
+        
+        result.style.display = 'none';
+
+        var p = document.createElement('p');
+        if(message) {
+            p.append(document.createTextNode(message));
+        }
+        error.innerHTML = '';
+        error.append(p);
+        error.style.display = message ? 'initial' : 'none';
+    }
+
+    var resultHTML = result.innerHTML;
+
+    var showUI = function(user) {
+        button.removeAttribute('disabled');
+        button.innerHTML = 'Stop';
+
+        form.removeEventListener('submit', handleBegin);
+        form.addEventListener('submit', handleEnd);
+
+        error.style.display = 'none';
+        error.innerHTML = '';
+
+        result.style.display = '';
+        result.innerHTML = resultHTML;
+
+        var update = function (element) {
+            var originalText = element.innerHTML;
+            var hostname = location.host;
+            var host = location.protocol + "//" + hostname;
+            element.innerHTML = originalText
+                .replace('http://localhost:8080', host)
+                .replace('localhost:8080', hostname)
+                .replace('{{.User}}', user)
+        };
+
+        var elements = result.querySelectorAll('.replace');
+        for (var i = 0; i < elements.length; i++) {
+            update(elements[i]);
+        }
+    }
+
+
+    var handleBegin, handleEnd;
+    var stopHandler;
+    
+    handleBegin = function(event) {
+        event.preventDefault();
+
+        var key = textarea.value;
+        
+        button.setAttribute('disabled', 'disabled');
+        textarea.setAttribute('readonly', 'readonly');
+        form.removeEventListener('submit', handleBegin);
+
+        registerKey(key, 
+            function(name, cleanup){
+                stopHandler = cleanup;
+                showUI(name);
+            },
+            resetUI.bind(undefined, "Server connection has been closed. "),
+            resetUI.bind(undefined, "Failed to make key available. Is it in the correct format?"),
+        );
+    }
+
+    handleEnd = function(event) {
+        event.preventDefault();
+
+        resetUI();
+        stopHandler();
+    }
+    
+    resetUI();
+</script>

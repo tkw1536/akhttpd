@@ -1,61 +1,68 @@
 // Command akhttpd is the authorized_keys http daemon.
 // It implements a RESTFUL API which serves authorized_keys files for every GitHub user.
 //
-// API
+// # API
 //
 // This daemon exposes the following API.
 //
-//  GET /
-//  GET /index.html
+//	GET /
+//	GET /index.html
+//
 // Returns a human-readable index document.
 //
-//  GET /${username}
+//	GET /${username}
 //
 // When requested from common command line clients, behave like /${username}/authorized_keys.
 // Else, behave like /${username}.html`.
 //
-//  GET /${username}/authorized_keys
+//	GET /${username}/authorized_keys
 //
 // Returns an authorized_keys file for the provided username.
 // When successful, returns HTTP 200 along with appropriate Content-Disposition and Content-Type Headers.
 // When the user does not exist, returns HTTP 404.
 // When something goes wrong, returns HTTP 500.
 //
-//  GET /${username}.html
+//	GET /${username}.html
 //
 // Returns a user-facing page to display keys for the provided username.
 // When successful, returns HTTP 200.
 // When the user does not exist, returns HTTP 404.
 // When something goes wrong, returns HTTP 500.
 //
-//  GET /${username}.sh
+//	GET /${username}.sh
 //
 // Returns a shell script that automatically fills the file '.ssh/authorized_keys' with the keys for the requested user.
 // Any non-existent directories are created.
 // Existing files are overwritten.
 // This script intended to be piped into /bin/sh using a command like
-//  curl http://localhost:8080/username.sh | /bin/sh
+//
+//	curl http://localhost:8080/username.sh | /bin/sh
+//
 // When the user does not exist, returns HTTP 404.
 // When something goes wrong, returns HTTP 500.
 //
-//  GET /robots.txt
+//	GET /robots.txt
 //
 // Returns a robots.txt file.
 //
-//  GET /_/
+//	GET /_/
 //
 // Optionally serves a static folder for more information and detailed documentation of the current server.
 //
-// Configuration
+//	GET /_/upload/
+//
+// Optionally serves an interface for user uploads.
+//
+// # Configuration
 //
 // akhttpd can be configured using an environment variable as well as command line arguments.
 //
-//  host:port
+//	host:port
 //
 // By default akhttpd listens on localhost, port 8080 only.
 // To change this, pass an argument of the form 'host:port' to the akhttpd command.
 //
-//  GITHUB_TOKEN=token, -token TOKEN
+//	GITHUB_TOKEN=token, -token TOKEN
 //
 // akhttpd interacts with the GitHub API.
 // By default, this interaction is unauthenticated.
@@ -63,35 +70,42 @@
 // It does not need access to any Scopes.
 // It should be provided using either the GITHUB_TOKEN environment variable or the -token flag.
 //
-//  -api-timeout duration
+//	-api-timeout duration
 //
 // When interacting with the GitHub API, akhttp uses a default timeout of 1s.
 // After this timeout expires, any response is considered invalid and an HTTP 500 is returned to the client.
 // Use this flag to change the default timeout.
 //
-//  -cache-age duration, -cache-size bytes
+//	-cache-age duration, -cache-size bytes
 //
 // To avoid unneccessary GitHub API requests, akhttpd caches responses.
 // Respones are cached for 1h by default, with a maximum cache size of 25kb.
 // Use these flags to change the defaults.
 //
-//  -akpath path
+//	-akpath path
 //
 // Before querying the GitHub API for a users' public keys first check this path on the filesystem.
 // If a file corresponding to a requested username exists, treat that file as an 'authorized_keys' file
 // and return only keys stored in there.
 //
-//  -index filename
+//	-index filename
 //
 // A sensible default index.html file is served on the root directory.
 // Use this flag to select a different file instead.
 //
-//  -serve path
+//	-serve path
 //
 // akhttpd can in addition to the standard routes serve a '_' route.
 // Use this flag to configure a directory to be served from this path
 //
-//  LEGAL_BLOCK=user1,user2
+//	-allow-uploads, -upload-auth USER:PASSWORD
+//
+// akhttpd can optionally allow users to upload their own keys temporarily.
+// This endpoint can also be password protected with the given username and password.
+// The upload-auth can also be provided with the UPLOAD_AUTH environment variable.
+// Providing this variable automatically implies -allow-uploads.
+//
+//	LEGAL_BLOCK=user1,user2
 //
 // For legal reasons it might be neccessary to block specific users from being served using this service.
 // To block a specific user, use the LEGAL_BLOCK variable.
@@ -114,7 +128,13 @@ import (
 )
 
 func main() {
-	repos := make(repo.Combo, 0, 2)
+	repos := make(repo.Combo, 0, 3)
+
+	// create a repository for uploadable uploadable
+	var uploadable repo.UploadableKeys
+	if allowUploads {
+		repos = append(repos, &uploadable)
+	}
 
 	// create the files directory first
 	if akFilesPath != "" {
@@ -170,6 +190,18 @@ func main() {
 	}
 	http.Handle("/", h)
 
+	if allowUploads {
+		log.Printf("enabling user uploads")
+		uploadable.Prefix = "uploaded-"
+		uploadable.WriteSuffix = h.WriteSuffix
+		if uploadAuth != "" {
+			log.Printf("enabling protected user uploads")
+			uploadable.AuthUser, uploadable.AuthPassword, _ = strings.Cut(uploadAuth, ":")
+		}
+
+		http.Handle("/_/upload/", &uploadable)
+	}
+
 	// bind and listen to the server
 	log.Printf("Listening on %s\n", bindAddress)
 	if err := http.ListenAndServe(bindAddress, nil); err != http.ErrServerClosed {
@@ -196,6 +228,9 @@ var suffixHTMLPath = ""
 var underscorePath = ""
 var akFilesPath = ""
 
+var uploadAuth = os.Getenv("UPLOAD_AUTH")
+var allowUploads = len(uploadAuth) > 0
+
 func init() {
 	var legalFlag bool
 	flag.BoolVar(&legalFlag, "legal", legalFlag, "Print legal notices and exit")
@@ -216,6 +251,9 @@ func init() {
 	flag.StringVar(&suffixHTMLPath, "suffix", suffixHTMLPath, "optional path to append to all html responses. Assumed to be of mime-type html. ")
 	flag.StringVar(&underscorePath, "serve", underscorePath, "optional path to '_' static directory to serve. ")
 	flag.StringVar(&akFilesPath, "akpath", akFilesPath, "optional path to check for additional authorized keys files")
+	flag.BoolVar(&allowUploads, "allow-uploads", allowUploads, "serve the '/_/upload/' path to allow users to temporarily upload their own keys")
+	flag.StringVar(&uploadAuth, "upload-auth", uploadAuth, "Protect '/_/upload/' with a 'username:password' combination")
+
 	flag.Parse()
 
 	// read command line arguments
