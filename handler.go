@@ -67,18 +67,21 @@ var defaultRobotsTXT []byte
 // This method only responds successfully to a few URLS.
 // All other URLs result in a HTTP 404 Response.
 //
-//  GET /
-//  GET /index.html
+//	GET /
+//	GET /index.html
+//
 // When IndexHTMLPath is not the empty string, sends back the file with Status HTTP 200.
 // When IndexHTMLPath is empty, it sends back a default index.html file.
 //
-//  GET /${username}
-//  GET /${username}.${formatter}, GET /${username}/${formatter}
+//	GET /${username}
+//	GET /${username}.${formatter}, GET /${username}/${formatter}
+//
 // Fetches SSH Keys for the provided user and formats them with formatter.
 // When formatter is omitted, uses the default formatter.
 // If the formatter or user do not exist, returns HTTP 404.
 //
-//  GET /robots.txt
+//	GET /robots.txt
+//
 // When RobotsTXTPath is not the empty string, sends back the file with Status HTTP 200.
 // When RobotsTXTPath is empty, it sends back a default robots.txt file.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
