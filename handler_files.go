@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 )
 
+// spellchecker:words akhttpd
+
 // handlePathOrFallback sends filepath to w with the provided content type
 //
 // When filepath does not exist (or is the empty string), returns fallbackBytes.
@@ -26,7 +28,7 @@ func handlePathOrFallback(w http.ResponseWriter, filepath string, fallbackBytes 
 		err = nil
 	}
 
-	// other unknown error occured; something went wrong!
+	// other unknown error occurred; something went wrong!
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return err

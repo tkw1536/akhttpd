@@ -16,7 +16,7 @@ func (c Combo) GetKeys(context context.Context, username string) (source string,
 	for _, r := range c {
 		source, keys, err = r.GetKeys(context, username)
 
-		// upon encountering a regular (not not-found error) or nil error, we can immediatly return
+		// upon encountering a regular (not not-found error) or nil error, we can immediately return
 		if _, isNotFound := err.(UserNotFoundError); err == nil || !isNotFound {
 			break
 		}

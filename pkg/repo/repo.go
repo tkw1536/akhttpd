@@ -1,4 +1,4 @@
-// Package repo provides keyrepo
+// Package repo provides KeyRepository
 package repo
 
 import (

@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// spellchecker:words akhttpd
+
 // ShellScript is a zero-size struct that formats ssh keys as a shell script updating an authorized_keys file.
 // It implements Formatter.
 type ShellScript struct{}

@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// spellchecker:words akhttpd
+
 // AuthorizedKeys is a struct that formats ssh keys as an authorized_keys file.
 // It implements Formatter.
 type AuthorizedKeys struct{}

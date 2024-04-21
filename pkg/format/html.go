@@ -11,6 +11,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// spellchecker:words akhttpd
+
 // FormatterShellScript is a zero-size struct that formats ssh keys as a user-facing html page.
 // It implements Formatter.
 type HTML struct {

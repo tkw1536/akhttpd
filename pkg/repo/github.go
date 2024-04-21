@@ -15,6 +15,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// spellchecker:words lrucache gregjones httpcache
+
 // GitHubKeys is an object that allows fetching ssh keys for GitHub Users using the GitHub API.
 // It implements KeyRepository.
 //
@@ -31,7 +33,7 @@ type GitHubKeysOptions struct {
 	Token string
 
 	// Timeout is the Timeout for requests to GitHub.
-	// The zero value indiciates no timeout.
+	// The zero value indicates no timeout.
 	Timeout time.Duration
 
 	// MaxCacheSize is the maximum size of an internally used cache in bytes.

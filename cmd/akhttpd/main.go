@@ -72,14 +72,14 @@
 //
 //	-api-timeout duration
 //
-// When interacting with the GitHub API, akhttp uses a default timeout of 1s.
+// When interacting with the GitHub API, akhttpd uses a default timeout of 1s.
 // After this timeout expires, any response is considered invalid and an HTTP 500 is returned to the client.
 // Use this flag to change the default timeout.
 //
 //	-cache-age duration, -cache-size bytes
 //
-// To avoid unneccessary GitHub API requests, akhttpd caches responses.
-// Respones are cached for 1h by default, with a maximum cache size of 25kb.
+// To avoid unnecessary GitHub API requests, akhttpd caches responses.
+// Responses are cached for 1h by default, with a maximum cache size of 25kb.
 // Use these flags to change the defaults.
 //
 //	-akpath path
@@ -107,10 +107,12 @@
 //
 //	LEGAL_BLOCK=user1,user2
 //
-// For legal reasons it might be neccessary to block specific users from being served using this service.
+// For legal reasons it might be necessary to block specific users from being served using this service.
 // To block a specific user, use the LEGAL_BLOCK variable.
-// It contains a comma-seperated list of users to be blocked.
+// It contains a comma-separated list of users to be blocked.
 package main
+
+// spellchecker:words akhttpd akpath
 
 import (
 	"flag"

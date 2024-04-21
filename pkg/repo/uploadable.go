@@ -17,6 +17,8 @@ import (
 	_ "embed"
 )
 
+// spellchecker:words akhttpd wshandler userkeys
+
 // UploadableKeys is an object that allows callers to upload keys to the server temporarily.
 type UploadableKeys struct {
 	Prefix  string // Prefix is the prefix for new users
@@ -117,8 +119,8 @@ func (uk *UploadableKeys) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if an upgrade to the websocket was requested, serve a websocket!
 	if r.Header.Get("Upgrade") == "websocket" {
-		wshandler.Handle(w, r, func(messager wshandler.WebSocket) {
-			key, ok := messager.Read() // wait for any kind of message
+		wshandler.Handle(w, r, func(messenger wshandler.WebSocket) {
+			key, ok := messenger.Read() // wait for any kind of message
 			if !ok {
 				return
 			}
@@ -134,11 +136,11 @@ func (uk *UploadableKeys) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			defer cleanup()
 
 			// write the username back!
-			if !messager.Write(username) {
+			if !messenger.Write(username) {
 				return
 			}
 
-			messager.Wait()
+			messenger.Wait()
 		})
 		return
 	}

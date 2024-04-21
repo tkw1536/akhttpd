@@ -9,6 +9,8 @@ import (
 	"github.com/mpolden/echoip/useragent"
 )
 
+// spellchecker:words akhttpd mpolden echoip httpie libfetch ddclient Mikrotik
+
 // Formatter is an object that can write ssh keys to an http.ResponseWriter.
 type Formatter interface {
 	// WriteTo writes the ssh keys, which are associated with the given user, into w.

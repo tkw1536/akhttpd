@@ -14,7 +14,9 @@ import (
 	"github.com/tkw1536/akhttpd/pkg/repo"
 )
 
-// Handler is the main akhttp Server Handler.
+// spellchecker:words akhttpd
+
+// Handler is the main akhttpd Server Handler.
 // It implements http.Handler, see the ServerHTTP method.
 type Handler struct {
 	repo.KeyRepository
@@ -106,7 +108,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.WriteSuffix(w)
 	case path == "/robots.txt":
 		handlePathOrFallback(w, h.RobotsTXTPath, defaultRobotsTXT, "text/plain")
-	case path == "/favicon.ico": // performance optimization as webbrowsers frequently request this
+	case path == "/favicon.ico": // performance optimization as web browsers frequently request this
 		http.NotFound(w, r)
 
 	case handlerPath.MatchString(path): // the main route, where the bulk of handling takes place
