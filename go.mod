@@ -9,7 +9,7 @@ require (
 	github.com/mpolden/echoip v0.0.0-20230521182614-d84665c26cf7
 	github.com/pkg/errors v0.9.1
 	github.com/tkw1536/pkglib v0.0.0-20240421230152-7fcf00edc7df
-	golang.org/x/crypto v0.22.0
+	golang.org/x/crypto v0.31.0
 	golang.org/x/oauth2 v0.19.0
 )
 
@@ -17,5 +17,5 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 )
