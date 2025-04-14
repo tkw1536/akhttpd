@@ -1,21 +1,20 @@
 module github.com/tkw1536/akhttpd
 
-go 1.22.2
+go 1.24.2
 
 require (
-	github.com/die-net/lrucache v0.0.0-20220628165024-20a71bc65bf1
+	github.com/die-net/lrucache v0.0.0-20240714232319-26322ba4bc23
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/mpolden/echoip v0.0.0-20230521182614-d84665c26cf7
 	github.com/pkg/errors v0.9.1
-	github.com/tkw1536/pkglib v0.0.0-20240421230152-7fcf00edc7df
-	golang.org/x/crypto v0.31.0
-	golang.org/x/oauth2 v0.19.0
+	github.com/tkw1536/pkglib v0.0.0-20250414190927-f9a88308b643
+	golang.org/x/crypto v0.37.0
+	golang.org/x/oauth2 v0.29.0
 )
 
 require (
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/gorilla/websocket v1.5.1 // indirect
-	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 )

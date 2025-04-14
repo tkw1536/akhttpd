@@ -147,7 +147,7 @@ func (uk *UploadableKeys) handleWS(conn *websocketx.Connection) {
 	defer cleanup()
 
 	// Write the username back
-	<-conn.WriteText(username)
+	conn.WriteText(username)
 
 	// and wait for the connection to be closed
 	// by the client
