@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tkw1536/akhttpd/pkg/format"
-	"github.com/tkw1536/akhttpd/pkg/repo"
+	"go.tkw01536.de/akhttpd/pkg/format"
+	"go.tkw01536.de/akhttpd/pkg/repo"
 )
 
 // spellchecker:words akhttpd

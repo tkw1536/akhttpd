@@ -123,10 +123,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tkw1536/akhttpd"
-	"github.com/tkw1536/akhttpd/legal"
-	"github.com/tkw1536/akhttpd/pkg/format"
-	"github.com/tkw1536/akhttpd/pkg/repo"
+	"go.tkw01536.de/akhttpd"
+	"go.tkw01536.de/akhttpd/legal"
+	"go.tkw01536.de/akhttpd/pkg/format"
+	"go.tkw01536.de/akhttpd/pkg/repo"
 )
 
 func main() {

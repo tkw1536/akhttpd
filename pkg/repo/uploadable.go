@@ -15,9 +15,9 @@ import (
 
 	_ "embed"
 
-	"github.com/tkw1536/pkglib/lazy"
-	"github.com/tkw1536/pkglib/password"
-	"github.com/tkw1536/pkglib/websocketx"
+	"go.tkw01536.de/pkglib/lazy"
+	"go.tkw01536.de/pkglib/password"
+	"go.tkw01536.de/pkglib/websocketx"
 )
 
 // spellchecker:words akhttpd wshandler userkeys

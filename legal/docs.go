@@ -3,4 +3,4 @@ package legal
 
 // spellchecker:words akhttpd gogenlicense
 
-//go:generate gogenlicense -p legal -n Notices -d notices.go github.com/tkw1536/akhttpd
+//go:generate go tool gogenlicense -m

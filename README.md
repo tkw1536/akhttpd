@@ -30,7 +30,7 @@ You can additionally add authorized key files to override whatever is stored on 
 -v /path/to/additional/keys:/keys:ro
 ```
 
-For a more detailed documentation, see [the godoc page](https://pkg.go.dev/github.com/tkw1536/akhttpd). 
+For a more detailed documentation, see [the godoc page](https://pkg.go.dev/go.tkw01536.de/akhttpd). 
 
 ## License
 The code is licensed under the CC0 License, hence in the public domain. 

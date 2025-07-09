@@ -7,7 +7,7 @@ import (
 
 	_ "embed"
 
-	"github.com/tkw1536/akhttpd/pkg/count"
+	"go.tkw01536.de/akhttpd/pkg/count"
 	"golang.org/x/crypto/ssh"
 )
 
